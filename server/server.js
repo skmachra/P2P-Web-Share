@@ -5,6 +5,7 @@ const { Server } = require("socket.io");
 
 const app = express();
 
+// Allow the local Vite client and deployed frontend to reach this server.
 app.use(
     cors({
         origin: [
@@ -32,6 +33,7 @@ const io = new Server(server, {
     },
 });
 
+// Register all room and WebRTC signaling event handlers.
 require("./socket")(io);
 
 const PORT = 5000;

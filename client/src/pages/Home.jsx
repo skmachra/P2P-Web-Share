@@ -13,6 +13,7 @@ function Home() {
     const navigate = useNavigate();
 
     useEffect(() => {
+        // Track Socket.IO connection state and move to the host page after room creation.
         socket.on("connect", () => {
             setConnected(true);
         });
@@ -33,6 +34,7 @@ function Home() {
     }, [navigate]);
 
     const createRoom = () => {
+        // Ask the signaling server to create a new share room for this browser.
         socket.emit("create-room");
     };
 

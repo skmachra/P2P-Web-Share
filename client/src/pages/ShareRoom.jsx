@@ -33,6 +33,7 @@ function ShareRoom() {
 
     useEffect(() => {
         const setupEncryption = async () => {
+            // Reuse the same key and IV after refresh so the share link stays valid.
             let exportedKey = sessionStorage.getItem(`room-key-${roomId}`);
 
             let iv = sessionStorage.getItem(`room-iv-${roomId}`);
@@ -80,6 +81,7 @@ function ShareRoom() {
 
         pcRef.current = pc;
 
+        // Send WebRTC ICE candidates through the signaling server.
         pc.onicecandidate = (event) => {
             if (event.candidate) {
                 socket.emit("ice-candidate", {
@@ -128,6 +130,7 @@ function ShareRoom() {
         const startTime = Date.now();
 
         try {
+            // Wait when the data channel buffer is high to avoid overwhelming it.
             channel.bufferedAmountLowThreshold = 1024 * 1024;
 
             const waitForBuffer = async () => {

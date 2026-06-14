@@ -12,6 +12,7 @@ module.exports = (io) => {
         socket.on("create-room", () => {
             const roomId = crypto.randomBytes(4).toString("hex");
 
+            // Store the host and single receiver assigned to this share room.
             rooms.set(roomId, {
                 host: socket.id,
                 receiver: null,
@@ -100,6 +101,7 @@ module.exports = (io) => {
             socket.leave(roomId);
         });
 
+        // Relay WebRTC signaling only; file bytes move over the peer connection.
         socket.on("offer", ({ roomId, offer }) => {
             socket.to(roomId).emit("offer", {
                 offer,
@@ -123,6 +125,7 @@ module.exports = (io) => {
         socket.on("disconnect", () => {
             for (const [roomId, room] of rooms.entries()) {
                 if (room.host === socket.id) {
+                    // Keep the room briefly so a host refresh can rejoin.
                     room.host = null;
                     setTimeout(() => {
                         const currentRoom = rooms.get(roomId);

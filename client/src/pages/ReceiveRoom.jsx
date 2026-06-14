@@ -102,6 +102,7 @@ function ReceiveRoom() {
     useEffect(() => {
         const initEncryption = async () => {
             try {
+                // Read the shared key and IV from the URL fragment for decryption.
                 const hash = window.location.hash;
 
                 const params = new URLSearchParams(hash.replace("#", ""));
@@ -147,6 +148,7 @@ function ReceiveRoom() {
             pc.ondatachannel = (event) => {
                 const channel = event.channel;
 
+                // Handle control messages as JSON and file chunks as encrypted bytes.
                 channel.onmessage = async (event) => {
                     if (typeof event.data === "string") {
                         const data = JSON.parse(event.data);
@@ -193,6 +195,7 @@ function ReceiveRoom() {
                         receivedChunksRef.current.push(decrypted);
 
                         receivedCountRef.current++;
+                        // Estimate speed and ETA from received chunks and elapsed time.
                         const receivedBytes =
                             (receivedCountRef.current * metadataRef.current.fileSize) /
                             metadataRef.current.totalChunks;
