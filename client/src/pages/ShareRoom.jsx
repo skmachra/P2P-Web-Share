@@ -249,6 +249,7 @@ function ShareRoom() {
             channelRef.current = channel;
 
             channel.onopen = () => {
+                console.log("DATA CHANNEL OPEN")
                 setStatus("Connected");
             };
 

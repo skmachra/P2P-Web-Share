@@ -39,7 +39,10 @@ function ReceiveRoom() {
 
         pc.onconnectionstatechange = () => {
             const state = pc.connectionState;
-
+            console.log(
+        "CONNECTION:",
+        pc.connectionState,
+    );
             if (state === "connected") {
                 setStatus("Connected");
             }
