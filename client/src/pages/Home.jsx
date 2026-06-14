@@ -38,8 +38,6 @@ function Home() {
 
     return (
         <div className="min-h-screen flex flex-col">
-            <Navbar />
-
             <main className="flex-1 flex items-center justify-center px-6 py-10">
                 <div className="w-full max-w-3xl">
                     <div className="border rounded-2xl p-10 shadow-sm text-center bg-white">
@@ -114,8 +112,6 @@ function Home() {
                     </div>
                 </div>
             </main>
-
-            <Footer />
         </div>
     );
 }
