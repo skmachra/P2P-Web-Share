@@ -7,7 +7,12 @@ import { generateShareLink } from "../utils/room";
 import { rtcConfig } from "../services/webrtc";
 import { CHUNK_SIZE, getTotalChunks } from "../utils/chunks";
 import { generateSHA256 } from "../utils/hash";
-import { generateKey, exportKey, encryptData } from "../utils/encryption";
+import {
+    generateKey,
+    exportKey,
+    importKey,
+    encryptData,
+} from "../utils/encryption";
 
 function ShareRoom() {
     const { roomId } = useParams();
@@ -27,21 +32,33 @@ function ShareRoom() {
 
     useEffect(() => {
         const setupEncryption = async () => {
-            const key = await generateKey();
+            let exportedKey = sessionStorage.getItem(`room-key-${roomId}`);
 
-            encryptionKeyRef.current = key;
+            let iv = sessionStorage.getItem(`room-iv-${roomId}`);
 
-            const exported = await exportKey(key);
+            if (!exportedKey || !iv) {
+                const key = await generateKey();
 
-            const iv = btoa(String.fromCharCode(...ivRef.current));
+                exportedKey = await exportKey(key);
 
-            const shareLink =
-                `${window.location.origin}` +
-                `/share/${roomId}` +
-                `#key=${encodeURIComponent(exported)}` +
-                `&iv=${encodeURIComponent(iv)}`;
+                iv = btoa(String.fromCharCode(...ivRef.current));
 
-            setLink(shareLink);
+                sessionStorage.setItem(`room-key-${roomId}`, exportedKey);
+
+                sessionStorage.setItem(`room-iv-${roomId}`, iv);
+
+                encryptionKeyRef.current = key;
+            } else {
+                encryptionKeyRef.current = await importKey(exportedKey);
+
+                ivRef.current = Uint8Array.from(atob(iv), (c) => c.charCodeAt(0));
+            }
+
+            setLink(
+                `${window.location.origin}/share/${roomId}` +
+                `#key=${encodeURIComponent(exportedKey)}` +
+                `&iv=${encodeURIComponent(iv)}`,
+            );
         };
 
         setupEncryption();
@@ -204,6 +221,10 @@ function ShareRoom() {
 
     useEffect(() => {
         socket.on("peer-found", async () => {
+            if (pcRef.current) {
+                pcRef.current.close();
+            }
+
             setStatus("Connecting");
 
             const pc = createPeerConnection();

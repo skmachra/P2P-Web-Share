@@ -14,7 +14,7 @@ module.exports = (io) => {
 
             rooms.set(roomId, {
                 host: socket.id,
-                peers: [socket.id],
+                receiver: null,
             });
 
             socket.join(roomId);
@@ -22,8 +22,6 @@ module.exports = (io) => {
             socket.emit("room-created", {
                 roomId,
             });
-
-            console.log(`Room Created: ${roomId}`);
         });
 
         socket.on("join-room", ({ roomId }) => {
@@ -33,28 +31,29 @@ module.exports = (io) => {
                 socket.emit("room-error", {
                     message: "Room not found",
                 });
+
                 return;
             }
 
-            if (room.peers.length >= 2) {
+            if (room.receiver && room.receiver !== socket.id) {
                 socket.emit("room-error", {
                     message: "Room full",
                 });
+
                 return;
             }
 
-            room.peers.push(socket.id);
+            room.receiver = socket.id;
 
             socket.join(roomId);
 
             socket.emit("room-joined", {
                 roomId,
             });
-            console.log("Sending peer-found to host");
+
             io.to(room.host).emit("peer-found", {
                 peerId: socket.id,
             });
-            console.log("peer-found event received");
 
             console.log(`${socket.id} joined ${roomId}`);
         });
@@ -64,13 +63,15 @@ module.exports = (io) => {
 
             if (!room) return;
 
-            room.peers = room.peers.filter((id) => id !== socket.id);
-
-            socket.leave(roomId);
-
-            if (room.peers.length === 0) {
+            if (room.host === socket.id) {
                 rooms.delete(roomId);
             }
+
+            if (room.receiver === socket.id) {
+                room.receiver = null;
+            }
+
+            socket.leave(roomId);
         });
 
         socket.on("offer", ({ roomId, offer }) => {
@@ -95,15 +96,18 @@ module.exports = (io) => {
 
         socket.on("disconnect", () => {
             for (const [roomId, room] of rooms.entries()) {
-                if (room.peers.includes(socket.id)) {
-                    room.peers = room.peers.filter((id) => id !== socket.id);
+                if (room.host === socket.id) {
+                    io.to(roomId).emit("host-left");
 
-                    if (room.host === socket.id) {
-                        io.to(roomId).emit("host-left");
-                        rooms.delete(roomId);
-                    } else {
-                        io.to(room.host).emit("peer-left");
-                    }
+                    rooms.delete(roomId);
+
+                    continue;
+                }
+
+                if (room.receiver === socket.id) {
+                    room.receiver = null;
+
+                    io.to(room.host).emit("peer-left");
                 }
             }
 
