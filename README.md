@@ -133,7 +133,7 @@ backend/
 ### Clone Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/skmachra/P2P-Web-Share.git
 cd p2p-web-share
 ```
 
@@ -198,19 +198,13 @@ http://localhost:5173
 
 Vercel Deployment:
 
-```text
-https://your-frontend-url.vercel.app
-```
+[Frontend](https://p2-p-web-share-nine.vercel.app/)
 
 ### Backend
 
 Render Deployment:
 
-```text
-https://your-backend-url.onrender.com
-```
-
----
+[Backend](https://p2p-web-share-2ckz.onrender.com)
 
 ## Testing
 
