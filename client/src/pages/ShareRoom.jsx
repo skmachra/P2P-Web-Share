@@ -29,6 +29,7 @@ function ShareRoom() {
     const encryptionKeyRef = useRef(null);
     const ivRef = useRef(crypto.getRandomValues(new Uint8Array(12)));
     const [link, setLink] = useState("");
+    const [roomExpired, setRoomExpired] = useState(false);
 
     useEffect(() => {
         const setupEncryption = async () => {
@@ -220,6 +221,17 @@ function ShareRoom() {
     };
 
     useEffect(() => {
+        socket.emit("rejoin-host", {
+            roomId,
+        });
+        socket.on("host-rejoined", () => {
+            setStatus("Connected");
+        });
+        socket.on("room-error", (data) => {
+            if (data.message === "Room not found") {
+                setRoomExpired(true);
+            }
+        });
         socket.on("peer-found", async () => {
             if (pcRef.current) {
                 pcRef.current.close();
@@ -270,8 +282,29 @@ function ShareRoom() {
             socket.off("answer");
             socket.off("ice-candidate");
             socket.off("peer-left");
+            socket.off("host-rejoined");
+            socket.off("room-error");
         };
     }, [roomId]);
+
+    if (roomExpired) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <h1 className="text-3xl font-bold">Room Expired</h1>
+
+                    <p className="mt-4 text-zinc-500">This room no longer exists.</p>
+
+                    <button
+                        onClick={() => (window.location.href = "/")}
+                        className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg"
+                    >
+                        Create New Room
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center px-6 py-10">

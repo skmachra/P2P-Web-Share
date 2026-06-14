@@ -23,7 +23,33 @@ module.exports = (io) => {
                 roomId,
             });
         });
+        socket.on("rejoin-host", ({ roomId }) => {
+            const room = rooms.get(roomId);
 
+            if (!room) {
+                socket.emit("room-error", {
+                    message: "Room not found",
+                });
+
+                return;
+            }
+
+            if (room.host === null) {
+                room.host = socket.id;
+
+                socket.join(roomId);
+
+                socket.emit("host-rejoined");
+
+                if (room.receiver) {
+                    io.to(socket.id).emit("peer-found", {
+                        peerId: room.receiver,
+                    });
+                }
+
+                console.log(`Host rejoined room ${roomId}`);
+            }
+        });
         socket.on("join-room", ({ roomId }) => {
             const room = rooms.get(roomId);
 
@@ -97,9 +123,18 @@ module.exports = (io) => {
         socket.on("disconnect", () => {
             for (const [roomId, room] of rooms.entries()) {
                 if (room.host === socket.id) {
-                    io.to(roomId).emit("host-left");
+                    room.host = null;
+                    setTimeout(() => {
+                        const currentRoom = rooms.get(roomId);
 
-                    rooms.delete(roomId);
+                        if (currentRoom && currentRoom.host === null) {
+                            rooms.delete(roomId);
+
+                            console.log(`Room ${roomId} expired`);
+                        }
+                    }, 60000);
+
+                    io.to(roomId).emit("host-left");
 
                     continue;
                 }
