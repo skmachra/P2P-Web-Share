@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
 
-const URL = "http://localhost:5000";
+const URL = "https://p2p-web-share-2ckz.onrender.com";
 
 export const socket = io(URL);
