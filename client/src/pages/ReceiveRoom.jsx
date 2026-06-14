@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-
+import { Link, useParams } from "react-router-dom";
 import { socket } from "../services/socket";
 import { rtcConfig } from "../services/webrtc";
 import { generateSHA256 } from "../utils/hash";
@@ -134,6 +133,14 @@ function ReceiveRoom() {
             roomId,
         });
 
+        socket.on("room-error", (data) => {
+            if (data.message === "Room not found") {
+                setStatus("Room expired. Please ask the sender to create a new room.");
+            } else {
+                setStatus(data.message);
+            }
+        });
+
         socket.on("offer", async ({ offer }) => {
             const pc = createPeerConnection();
 
@@ -243,6 +250,7 @@ function ReceiveRoom() {
             socket.off("offer");
             socket.off("ice-candidate");
             socket.off("host-left");
+            socket.off("room-error");
         };
     }, [roomId]);
 
@@ -294,6 +302,27 @@ function ReceiveRoom() {
                             >
                                 {status}
                             </p>
+                            {status.includes("Room expired") && (
+                                <div className="mt-8">
+                                    <div className="mt-4">
+                                        <Link
+                                            to="/"
+                                            className="
+                    inline-block
+                    px-4
+                    py-2
+                    bg-blue-600
+                    text-white
+                    rounded-lg
+                    hover:bg-blue-700
+                    transition
+                "
+                                        >
+                                            Go Home
+                                        </Link>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="border rounded-xl p-4">
